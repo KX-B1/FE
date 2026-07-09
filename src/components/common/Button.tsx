@@ -1,9 +1,4 @@
-interface ButtonProps {
-  children: React.ReactNode;
-  type?: 'button' | 'submit';
-  onClick?: () => void;
-  inactive?: boolean;
-}
+import { ButtonProps } from '@/types/common';
 
 export default function Button({
   children,

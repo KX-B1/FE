@@ -1,9 +1,5 @@
 import Image from 'next/image';
-
-interface AuthCardProps {
-  subtitle: string;
-  children: React.ReactNode;
-}
+import { AuthCardProps } from '@/types/auth';
 
 export default function AuthCard({ subtitle, children }: AuthCardProps) {
   return (

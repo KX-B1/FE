@@ -1,5 +1,5 @@
-import ModeSwitcher from '@/components/common/ModeSwitcher';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <ModeSwitcher />;
+  redirect('/login');
 }

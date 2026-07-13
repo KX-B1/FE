@@ -2,16 +2,7 @@
 
 import { useState } from 'react';
 import { Eye } from 'lucide-react';
-
-interface InputProps {
-  label: string;
-  type?: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: () => void;
-  error?: string;
-}
+import { InputProps } from '@/types/common';
 
 export default function Input({
   label,

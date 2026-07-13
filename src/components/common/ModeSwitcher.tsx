@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useViewModeStore } from '@/stores/viewModeStore';
-const CanvasArea = dynamic(() => import('@/components/canvas/Canvas'), {
+const CanvasArea = dynamic(() => import('@/components/canvas/CanvasArea'), {
   ssr: false,
 });
 

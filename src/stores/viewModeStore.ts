@@ -7,7 +7,19 @@ interface ViewModeState {
   setViewMode: (mode: ViewMode) => void;
 }
 
-export const useViewModeStore = create<ViewModeState>((set) => ({
-  viewMode: 'canvas',
-  setViewMode: (newMode) => set({ viewMode: newMode }),
-}));
+interface AssetPanelState {
+  isPanelOpen: boolean;
+  toggleAssetPanel: () => void;
+}
+
+export const useViewModeStore = create<ViewModeState & AssetPanelState>(
+  (set) => ({
+    viewMode: 'canvas',
+    isPanelOpen: true,
+    setViewMode: (newMode) => set({ viewMode: newMode }),
+    toggleAssetPanel: () =>
+      set((state) => ({
+        isPanelOpen: !state.isPanelOpen,
+      })),
+  })
+);

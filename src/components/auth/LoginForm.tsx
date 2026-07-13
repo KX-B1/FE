@@ -6,9 +6,7 @@ import Link from 'next/link';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import GoogleButton from '@/components/auth/GoogleButton';
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+import { EMAIL_REGEX, PASSWORD_REGEX } from '@/types/auth';
 
 // 임시 로그인용 더미 계정 (백엔드 연동 전까지 사용)
 const DUMMY_USER = {
@@ -30,7 +28,7 @@ export default function LoginForm() {
       setEmailError('이메일을 입력해주세요');
       return false;
     }
-    if (!emailRegex.test(value)) {
+    if (!EMAIL_REGEX.test(value)) {
       setEmailError('올바른 이메일 형식이 아닙니다');
       return false;
     }
@@ -43,7 +41,7 @@ export default function LoginForm() {
       setPasswordError('비밀번호를 입력해주세요');
       return false;
     }
-    if (!passwordRegex.test(value)) {
+    if (!PASSWORD_REGEX.test(value)) {
       setPasswordError('영문, 숫자, 특수문자를 포함한 8자 이상이어야 합니다');
       return false;
     }

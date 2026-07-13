@@ -1,7 +1,5 @@
 import Image from 'next/image';
-
-export type VerificationStatus =
-  'idle' | 'sending' | 'sent' | 'expired' | 'verifying' | 'verified' | 'error';
+import type { VerificationStatus } from '@/types/auth';
 
 interface EmailFieldProps {
   email: string;

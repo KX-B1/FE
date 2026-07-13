@@ -1,19 +1,14 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import Checkbox from '@/components/auth/Checkbox';
 import GoogleButton from '@/components/auth/GoogleButton';
 import EmailField from '@/components/auth/EmailField';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
-const CODE_TTL_SECONDS = 180; // 인증번호 유효시간 3분 (조정 필요)
-
-type VerificationStatus =
-  'idle' | 'sending' | 'sent' | 'expired' | 'verifying' | 'verified' | 'error';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
+import { EMAIL_REGEX, PASSWORD_REGEX } from '@/types/auth';
 
 export default function SignupForm() {
   const [name, setName] = useState('');
@@ -25,69 +20,18 @@ export default function SignupForm() {
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
 
-  // --- 이메일 인증 상태 (추후 useEmailVerification 훅으로 분리 예정) ---
-  const [verificationStatus, setVerificationStatus] =
-    useState<VerificationStatus>('idle');
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [code, setCode] = useState('');
-  const [verificationError, setVerificationError] = useState<string | null>(
-    null
-  );
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const startTimer = useCallback(() => {
-    clearTimer();
-    setTimeLeft(CODE_TTL_SECONDS);
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearTimer();
-          setVerificationStatus('expired');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
-  const requestCode = useCallback(async () => {
-    if (!email) return;
-    setVerificationStatus('sending');
-    setVerificationError(null);
-    try {
-      // TODO: await api.requestEmailVerification(email)
-      setCode('');
-      setVerificationStatus('sent');
-      startTimer();
-    } catch {
-      setVerificationStatus('error');
-      setVerificationError('인증번호 발송에 실패했습니다.');
-    }
-  }, [email, startTimer]);
-
-  const verifyCode = useCallback(async () => {
-    setVerificationStatus('verifying');
-    setVerificationError(null);
-    try {
-      // TODO: await api.verifyEmailCode(email, code)
-      clearTimer();
-      setVerificationStatus('verified');
-    } catch {
-      setVerificationError('인증번호가 일치하지 않습니다.');
-      setVerificationStatus('sent');
-    }
-  }, [email, code]);
-  // --- 이메일 인증 상태 끝 ---
+  const {
+    status: verificationStatus,
+    timeLeft,
+    code,
+    error: verificationError,
+    isVerified: isEmailVerified,
+    setCode,
+    requestCode,
+    verifyCode,
+  } = useEmailVerification(email);
 
   const isEmailValid = EMAIL_REGEX.test(email);
-  const isEmailVerified = verificationStatus === 'verified';
   const canRequestCode =
     isEmailValid &&
     verificationStatus !== 'sending' &&

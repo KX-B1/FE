@@ -1,20 +1,14 @@
-import Link from 'next/link';
-import AuthCard from '@/components/auth/AuthCard';
+import SignupCard from '@/components/auth/SignupCard';
+import SignupForm from '@/components/auth/SignupForm';
+import SignupVisualPanel from '@/components/auth/SignupVisualPanel';
 
 export default function SignupPage() {
   return (
-    <AuthCard subtitle="회원가입 페이지 준비 중">
-      <div className="w-95 flex flex-col items-center gap-4">
-        <p className="text-center text-sm text-text-secondary">
-          아직 시안 없음
-        </p>
-        <Link
-          href="/login"
-          className="text-sm text-primary-500 hover:underline"
-        >
-          로그인으로 돌아가기
-        </Link>
-      </div>
-    </AuthCard>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-12 bg-linear-to-br from-[#0C0D18] via-[#110828] to-[#0A0C1A] px-6 py-16 lg:flex-row lg:gap-52 lg:p-30">
+      <SignupVisualPanel />
+      <SignupCard>
+        <SignupForm />
+      </SignupCard>
+    </div>
   );
 }

@@ -14,9 +14,9 @@ export default function MainPage() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-screen flex-col">
       <ProjectHeader onSave={handleSave} onExport={handleExport} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         <AssetSidebar />
         <ModeSwitcher />
       </div>

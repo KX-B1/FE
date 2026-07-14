@@ -13,5 +13,9 @@ const StoryboardArea = dynamic(
 // 스토리보드/캔버스 분기 영역
 export default function ModeSwitcher() {
   const viewMode = useViewModeStore((state) => state.viewMode);
-  return viewMode === 'storyboard' ? <StoryboardArea /> : <CanvasArea />;
+  return (
+    <div className="flex-1 h-full">
+      {viewMode === 'storyboard' ? <StoryboardArea /> : <CanvasArea />}
+    </div>
+  );
 }

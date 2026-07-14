@@ -3,9 +3,9 @@ import ModeSwitcher from '@/components/common/ModeSwitcher';
 
 export default function MainPage() {
   return (
-    <>
-      <ModeSwitcher />
+    <div className="flex h-screen">
       <AssetSidebar />
-    </>
+      <ModeSwitcher />
+    </div>
   );
 }

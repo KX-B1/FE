@@ -10,8 +10,7 @@ const CanvasArea = dynamic(() => import('@/components/canvas/CanvasArea'), {
 export default function ModeSwitcher() {
   const viewMode = useViewModeStore((state) => state.viewMode);
   return (
-    <div>
-      <p>테스트</p>
+    <div className="flex-1 h-full">
       {viewMode === 'canvas' && <CanvasArea />}
       {/* StoryboardArea 완성되면 아래로 교체
       {viewMode === 'storyboard' ? <StoryboardArea /> : <CanvasArea />}

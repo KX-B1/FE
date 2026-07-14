@@ -20,7 +20,7 @@ export default function AssetSidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <aside className="w-[260px] h-full flex flex-col bg-surface border border-border p-5 gap-6 m-5">
+    <aside className="w-[260px] h-full flex flex-col bg-surface border border-border p-5 gap-6">
       <h3 className="text-base text-secondary">에셋</h3>
       <section className="flex flex-col gap-3">
         <h4 className="text-xs text-secondary">케릭터 (N)</h4>

@@ -5,11 +5,7 @@ import { User } from 'lucide-react';
 import { useViewModeStore } from '@/stores/viewModeStore';
 import LogoPanel from './LogoPanel';
 import ExportDropdown from '@/components/common/ExportDropdown';
-
-interface ProjectHeaderProps {
-  onSave?: () => void;
-  onExport?: (type: 'pdf' | 'png') => void;
-}
+import type { ProjectHeaderProps } from '@/types/common';
 
 export default function ProjectHeader({
   onSave,

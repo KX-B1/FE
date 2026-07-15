@@ -21,9 +21,9 @@ export default function AssetSidebar() {
 
   return (
     <aside className="w-[260px] h-full flex flex-col bg-surface border border-border p-5 gap-6">
-      <h3 className="text-base text-secondary">에셋</h3>
+      <h3 className="text-base text-text-secondary">에셋</h3>
       <section className="flex flex-col gap-3">
-        <h4 className="text-xs text-secondary">케릭터 (N)</h4>
+        <h4 className="text-xs text-text-secondary">케릭터 (N)</h4>
         <div className="flex flex-wrap gap-2.5 justify-between">
           {assets
             .filter((asset) => asset.category === 'character')
@@ -32,7 +32,10 @@ export default function AssetSidebar() {
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
               >
-                <img src={asset.imageUrl} />
+                <img
+                  src={asset.imageUrl}
+                  className="w-full h-full object-cover rounded-2xl"
+                />
               </button>
             ))}
           <button
@@ -47,7 +50,7 @@ export default function AssetSidebar() {
         </div>
       </section>
       <section className="flex flex-col gap-3">
-        <h4 className="text-xs text-secondary">배경 (N)</h4>
+        <h4 className="text-xs text-text-secondary">배경 (N)</h4>
         <div className="flex flex-wrap gap-2.5 justify-between">
           {assets
             .filter((asset) => asset.category === 'background')
@@ -56,7 +59,10 @@ export default function AssetSidebar() {
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
               >
-                <img src={asset.imageUrl} />
+                <img
+                  src={asset.imageUrl}
+                  className="w-full h-full object-cover rounded-2xl"
+                />
               </button>
             ))}
           <button
@@ -71,7 +77,7 @@ export default function AssetSidebar() {
         </div>
       </section>
       <section className="flex flex-col gap-3">
-        <h4 className="text-xs text-secondary">소품 (N)</h4>
+        <h4 className="text-xs text-text-secondary">소품 (N)</h4>
         <div className="flex flex-wrap gap-2.5 justify-between">
           {assets
             .filter((asset) => asset.category === 'prop')
@@ -80,7 +86,10 @@ export default function AssetSidebar() {
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
               >
-                <img src={asset.imageUrl} />
+                <img
+                  src={asset.imageUrl}
+                  className="w-full h-full object-cover rounded-2xl"
+                />
               </button>
             ))}
           <button
@@ -90,7 +99,7 @@ export default function AssetSidebar() {
               fileInputRef.current?.click();
             }}
           >
-            <Plus size={20} className="text-placeholder shrink-0" />
+            <Plus size={20} className="text-text-placeholder shrink-0" />
           </button>
         </div>
       </section>

@@ -2,17 +2,31 @@ import { Group, Rect, Image as KonvaImage, Text } from 'react-konva';
 import useImage from 'use-image';
 
 interface ShotCardProps {
+  id: number;
   imageUrl: string;
   x: number;
   y: number;
   label: string;
+  onDragEnd: (id: number, x: number, y: number) => void;
 }
 
-export default function ShotCard({ imageUrl, x, y, label }: ShotCardProps) {
+export default function ShotCard({
+  id,
+  imageUrl,
+  x,
+  y,
+  label,
+  onDragEnd,
+}: ShotCardProps) {
   const [img] = useImage(imageUrl);
 
   return (
-    <Group x={x} y={y}>
+    <Group
+      x={x}
+      y={y}
+      draggable
+      onDragEnd={(e) => onDragEnd(id, e.target.x(), e.target.y())}
+    >
       <Rect
         width={180}
         height={120}

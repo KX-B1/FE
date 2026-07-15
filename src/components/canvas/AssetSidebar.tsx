@@ -45,7 +45,7 @@ export default function AssetSidebar() {
               fileInputRef.current?.click();
             }}
           >
-            <Plus size={20} className="text-placeholder shrink-0" />
+            <Plus size={20} className="text-text-placeholder shrink-0" />
           </button>
         </div>
       </section>
@@ -72,7 +72,7 @@ export default function AssetSidebar() {
               fileInputRef.current?.click();
             }}
           >
-            <Plus size={20} className="text-placeholder shrink-0" />
+            <Plus size={20} className="text-text-placeholder shrink-0" />
           </button>
         </div>
       </section>

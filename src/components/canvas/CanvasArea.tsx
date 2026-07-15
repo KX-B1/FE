@@ -1,5 +1,6 @@
 'use client';
 
+import ProjectName from '@/components/canvas/ProjectName';
 import ShotCard from '@/components/canvas/ShotCard';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
@@ -44,18 +45,7 @@ export default function CanvasArea() {
       {/* 최상위 wrapper → 제목 입력 영역 + stage 영역 + 툴바 */}
       <div className="flex flex-col h-full px-8 gap-6 pt-8 border border-border">
         {/* 1. 캔버스 - 제목 입력 영역 */}
-        <div className="inline-flex items-center gap-1">
-          <input
-            className="[field-sizing:content] placeholder:text-placeholder"
-            placeholder="제목을 입력하세요"
-          />
-          <Image
-            src="/canvas-title-pen.svg"
-            alt="제목 편집"
-            width={20}
-            height={20}
-          />
-        </div>
+        <ProjectName />
         {/* 2. 캔버스 - Stage 영역 */}
         <div ref={containerRef} className="flex-1 relative">
           <Stage width={size.width} height={size.height}>

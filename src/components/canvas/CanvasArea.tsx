@@ -8,6 +8,11 @@ import { Layer, Stage, Text } from 'react-konva';
 export default function CanvasArea() {
   const containerRef = useRef(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const handleDragEnd = (id: number, x: number, y: number) => {
+    setShots((prevShots) =>
+      prevShots.map((shot) => (shot.id === id ? { ...shot, x, y } : shot))
+    );
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -22,7 +27,7 @@ export default function CanvasArea() {
     };
   }, []);
 
-  const shots = [
+  const [shots, setShots] = useState([
     { id: 1, x: 20, y: 20, imageUrl: '/canvas-shotcard.svg' },
     { id: 2, x: 220, y: 20, imageUrl: '' },
     { id: 3, x: 420, y: 20, imageUrl: '' },
@@ -32,7 +37,7 @@ export default function CanvasArea() {
     { id: 7, x: 20, y: 300, imageUrl: '' },
     { id: 8, x: 220, y: 300, imageUrl: '' },
     { id: 9, x: 420, y: 300, imageUrl: '' },
-  ];
+  ]);
 
   return (
     <>
@@ -68,11 +73,13 @@ export default function CanvasArea() {
             <Layer id="assets">
               {shots.map((shot, index) => (
                 <ShotCard
+                  id={shot.id}
                   key={shot.id}
                   imageUrl={shot.imageUrl}
                   x={shot.x}
                   y={shot.y}
                   label={`shot ${index + 1}`}
+                  onDragEnd={handleDragEnd}
                 />
               ))}
             </Layer>

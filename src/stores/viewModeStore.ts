@@ -14,7 +14,7 @@ interface AssetPanelState {
 
 export const useViewModeStore = create<ViewModeState & AssetPanelState>(
   (set) => ({
-    viewMode: 'canvas',
+    viewMode: 'storyboard',
     isPanelOpen: true,
     setViewMode: (newMode) => set({ viewMode: newMode }),
     toggleAssetPanel: () =>

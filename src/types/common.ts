@@ -14,3 +14,12 @@ export interface InputProps {
   onBlur?: () => void;
   error?: string;
 }
+
+export interface ProjectHeaderProps {
+  onSave?: () => void;
+  onExport?: (type: 'pdf' | 'png') => void;
+}
+
+export interface ExportDropdownProps {
+  onExport?: (type: 'pdf' | 'png') => void;
+}

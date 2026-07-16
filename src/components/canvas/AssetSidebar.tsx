@@ -18,6 +18,17 @@ export default function AssetSidebar() {
   const [assets, setAssets] = useState<CanvasAsset[]>([]);
   const pendingSlotRef = useRef<PendingSlot | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleAssetDragStart =
+    (asset: CanvasAsset) => (e: React.DragEvent<HTMLButtonElement>) => {
+      e.dataTransfer.setData(
+        'application/json',
+        JSON.stringify({
+          id: asset.id,
+          category: asset.category,
+          imageUrl: asset.imageUrl,
+        })
+      );
+    };
 
   return (
     <aside className="w-[260px] h-full flex flex-col bg-surface border border-border p-5 gap-6">
@@ -31,6 +42,8 @@ export default function AssetSidebar() {
               <button
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
+                draggable
+                onDragStart={handleAssetDragStart(asset)}
               >
                 <img
                   src={asset.imageUrl}
@@ -58,6 +71,8 @@ export default function AssetSidebar() {
               <button
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
+                draggable
+                onDragStart={handleAssetDragStart(asset)}
               >
                 <img
                   src={asset.imageUrl}
@@ -85,6 +100,8 @@ export default function AssetSidebar() {
               <button
                 key={asset.id}
                 className="w-24 h-24 rounded-2xl border border-border flex items-center justify-center shrink-0"
+                draggable
+                onDragStart={handleAssetDragStart(asset)}
               >
                 <img
                   src={asset.imageUrl}

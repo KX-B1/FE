@@ -6,12 +6,45 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { Layer, Stage, Text } from 'react-konva';
 
+interface Shot {
+  id: number;
+  x: number;
+  y: number;
+  imageUrl: string;
+}
+
 export default function CanvasArea() {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const handleDragEnd = (id: number, x: number, y: number) => {
     setShots((prevShots) =>
       prevShots.map((shot) => (shot.id === id ? { ...shot, x, y } : shot))
+    );
+  };
+  const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const droppedAsset = JSON.parse(e.dataTransfer.getData('application/json'));
+    const dropPosition = {
+      x: e.clientX - containerRef.current.getBoundingClientRect().left,
+      y: e.clientY - containerRef.current.getBoundingClientRect().top,
+    };
+    const SLOT_WIDTH = 180;
+    const SLOT_HEIGHT = 120;
+    const matchedShot = shots.find((shot) => {
+      return (
+        shot.x <= dropPosition.x &&
+        dropPosition.x <= shot.x + SLOT_WIDTH &&
+        shot.y <= dropPosition.y &&
+        dropPosition.y <= shot.y + SLOT_HEIGHT
+      );
+    });
+    if (!matchedShot) return;
+    setShots((prev) =>
+      prev.map((shot) =>
+        shot.id === matchedShot.id
+          ? { ...shot, imageUrl: droppedAsset.imageUrl }
+          : shot
+      )
     );
   };
 
@@ -28,7 +61,7 @@ export default function CanvasArea() {
     };
   }, []);
 
-  const [shots, setShots] = useState([
+  const [shots, setShots] = useState<Shot[]>([
     { id: 1, x: 20, y: 20, imageUrl: '/canvas-shotcard.svg' },
     { id: 2, x: 220, y: 20, imageUrl: '' },
     { id: 3, x: 420, y: 20, imageUrl: '' },
@@ -47,18 +80,17 @@ export default function CanvasArea() {
         {/* 1. 캔버스 - 제목 입력 영역 */}
         <ProjectName />
         {/* 2. 캔버스 - Stage 영역 */}
-        <div ref={containerRef} className="flex-1 relative">
+        <div
+          ref={containerRef}
+          className="flex-1 relative"
+          onDragOver={(e) => {
+            e.preventDefault();
+          }}
+          onDrop={handleCanvasDrop}
+        >
           <Stage width={size.width} height={size.height}>
             {/* ㄴ 2-a. 격자 배경 레이어 */}
-            <Layer id="background">
-              <Text
-                text="background"
-                x={50}
-                y={50}
-                fontSize={24}
-                fill="white"
-              />
-            </Layer>
+            <Layer id="background"></Layer>
             {/* ㄴ 2-b. 카드 슬롯 레이어 */}
             <Layer id="assets">
               {shots.map((shot, index) => (
@@ -74,15 +106,7 @@ export default function CanvasArea() {
               ))}
             </Layer>
             {/* ㄴ 2-c. 화살표 그리기 등 기능 적용 레이어 */}
-            <Layer id="annotation">
-              <Text
-                text="annotation"
-                x={50}
-                y={50}
-                fontSize={24}
-                fill="white"
-              />
-            </Layer>
+            <Layer id="annotation"></Layer>
           </Stage>
           {/* 3. 캔버스 - 툴바 영역 */}
           <div className="flex h-[58px] w-[246px] absolute bottom-4 left-1/2 -translate-x-1/2 rounded-[20px] border border-border bg-card items-center justify-center gap-2 px-4">

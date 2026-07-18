@@ -36,7 +36,9 @@ export default function ShotCard({
         strokeWidth={1}
         cornerRadius={10}
       />
-      {img && <KonvaImage image={img} width={168} height={108} x={6} y={6} />}
+      {imageUrl && img && (
+        <KonvaImage image={img} width={168} height={108} x={6} y={6} />
+      )}
       <Text text={label} x={10} y={10} fontSize={16} fill="#ffffff" />
     </Group>
   );

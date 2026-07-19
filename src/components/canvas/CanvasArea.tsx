@@ -3,6 +3,7 @@
 import MemoBox from '@/components/canvas/MemoBox';
 import ProjectName from '@/components/canvas/ProjectName';
 import ShotCard from '@/components/canvas/ShotCard';
+import TextBox from '@/components/canvas/TextBox';
 import Toolbar from '@/components/canvas/Toolbar';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { useEffect, useRef, useState } from 'react';
@@ -13,6 +14,14 @@ interface Memo {
   x: number;
   y: number;
   content: string;
+}
+
+interface TextBoxData {
+  id: number;
+  x: number;
+  y: number;
+  content: string;
+  fontSize: number;
 }
 
 interface Shot {
@@ -27,28 +36,6 @@ export type ToolType = 'pointer' | 'move' | 'pen' | 'note' | 'text';
 export default function CanvasArea() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
-
-  const handleDragEnd = (id: number, x: number, y: number) => {
-    setShots((prevShots) =>
-      prevShots.map((shot) => (shot.id === id ? { ...shot, x, y } : shot))
-    );
-  };
-
-  const handleMemoDragEnd = (id: number, x: number, y: number) => {
-    setMemos((prevMemos) =>
-      prevMemos.map((memo) => (memo.id === id ? { ...memo, x, y } : memo))
-    );
-  };
-
-  const handleMemoContentChange = (id: number, content: string) => {
-    setMemos((prevMemos) =>
-      prevMemos.map((memo) => (memo.id === id ? { ...memo, content } : memo))
-    );
-  };
-
-  const handleMemoDelete = (id: number) => {
-    setMemos((prevMemos) => prevMemos.filter((memo) => memo.id !== id));
-  };
 
   const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -77,8 +64,34 @@ export default function CanvasArea() {
     );
   };
 
+  const handleDragEnd = (id: number, x: number, y: number) => {
+    setShots((prevShots) =>
+      prevShots.map((shot) => (shot.id === id ? { ...shot, x, y } : shot))
+    );
+  };
+
   const handleToolSelect = (tool: ToolType) => {
     setActiveTool(tool);
+  };
+
+  const handleMemoDragEnd = (id: number, x: number, y: number) => {
+    setMemos((prevMemos) =>
+      prevMemos.map((memo) => (memo.id === id ? { ...memo, x, y } : memo))
+    );
+  };
+
+  const handleMemoContentChange = (id: number, content: string) => {
+    setMemos((prevMemos) =>
+      prevMemos.map((memo) => (memo.id === id ? { ...memo, content } : memo))
+    );
+  };
+
+  const handleMemoDelete = (id: number) => {
+    setMemos((prevMemos) => prevMemos.filter((memo) => memo.id !== id));
+  };
+
+  const handleMemoClick = (id: number) => {
+    setEditingMemoId(id);
   };
 
   const handleCreateMemo = (e: KonvaEventObject<MouseEvent>) => {
@@ -91,7 +104,7 @@ export default function CanvasArea() {
     if (!pointerPosition) return;
 
     const newMemo = {
-      id: nextId.current++,
+      id: memoNextId.current++,
       x: pointerPosition.x,
       y: pointerPosition.y,
       content: '',
@@ -100,8 +113,54 @@ export default function CanvasArea() {
     setActiveTool('pointer');
   };
 
-  const handleMemoClick = (id: number) => {
-    setEditingMemoId(id);
+  const handleTextDragEnd = (id: number, x: number, y: number) => {
+    setTexts((prevTexts) =>
+      prevTexts.map((text) => (text.id === id ? { ...text, x, y } : text))
+    );
+  };
+
+  const handleCreateTextBox = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool !== 'text') return;
+
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const pointerPosition = stage.getPointerPosition();
+    if (!pointerPosition) return;
+
+    const newText = {
+      id: textNextId.current++,
+      x: pointerPosition.x,
+      y: pointerPosition.y,
+      content: '',
+      fontSize: 20,
+    };
+    setTexts([...texts, newText]);
+    setEditingTextId(newText.id);
+    setActiveTool('pointer');
+  };
+
+  const handleTextContentChange = (id: number, content: string) => {
+    if (content.length > 6) return;
+    setTexts((prevTexts) =>
+      prevTexts.map((text) => (text.id === id ? { ...text, content } : text))
+    );
+  };
+
+  const handleTextClick = (id: number) => {
+    setEditingTextId(id);
+  };
+
+  const handleTextDelete = (id: number) => {
+    setTexts((prevTexts) => prevTexts.filter((text) => text.id !== id));
+  };
+
+  const handleStageClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool === 'note') {
+      handleCreateMemo(e);
+    } else if (activeTool === 'text') {
+      handleCreateTextBox(e);
+    }
   };
 
   useEffect(() => {
@@ -128,12 +187,15 @@ export default function CanvasArea() {
     { id: 8, x: 220, y: 300, imageUrl: '' },
     { id: 9, x: 420, y: 300, imageUrl: '' },
   ]);
-
   const [memos, setMemos] = useState<Memo[]>([]);
+  const [texts, setTexts] = useState<TextBoxData[]>([]);
   const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
+  const [editingTextId, setEditingTextId] = useState<number | null>(null);
+  const editingText = texts.find((text) => text.id === editingTextId);
   const editingMemo = memos.find((memo) => memo.id === editingMemoId);
   const [activeTool, setActiveTool] = useState<ToolType>('pointer');
-  const nextId = useRef(0);
+  const memoNextId = useRef(0);
+  const textNextId = useRef(0);
 
   console.log('editingMemoId:', editingMemoId);
 
@@ -146,7 +208,7 @@ export default function CanvasArea() {
         {/* ■ 2. 캔버스 - Stage 영역 */}
         <div
           ref={containerRef}
-          className={`flex-1 relative ${activeTool === 'note' ? 'cursor-crosshair' : ''}`}
+          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' ? 'cursor-crosshair' : ''}`}
           onDragOver={(e) => {
             e.preventDefault();
           }}
@@ -154,6 +216,7 @@ export default function CanvasArea() {
         >
           {editingMemo && (
             <textarea
+              spellCheck={false}
               value={editingMemo.content}
               className="absolute"
               style={{
@@ -170,10 +233,35 @@ export default function CanvasArea() {
               onBlur={() => setEditingMemoId(null)}
             />
           )}
+
+          {editingText && (
+            <textarea
+              autoFocus
+              spellCheck={false}
+              value={editingText.content}
+              className="absolute"
+              style={{
+                left: editingText.x,
+                top: editingText.y,
+                width: 120,
+                height: 28,
+                resize: 'none',
+                zIndex: 10,
+                outline: 'none',
+                border: 'none',
+                padding: 0,
+              }}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                handleTextContentChange(editingText.id, e.target.value)
+              }
+              onBlur={() => setEditingTextId(null)}
+            />
+          )}
+
           <Stage
             width={size.width}
             height={size.height}
-            onClick={handleCreateMemo}
+            onClick={handleStageClick}
           >
             {/* 2-a. 격자 배경 레이어 */}
             <Layer id="background"></Layer>
@@ -205,6 +293,21 @@ export default function CanvasArea() {
                   isEditing={editingMemoId === memo.id}
                   onClick={handleMemoClick}
                   onDelete={handleMemoDelete}
+                />
+              ))}
+              {texts.map((text) => (
+                <TextBox
+                  id={text.id}
+                  key={text.id}
+                  x={text.x}
+                  y={text.y}
+                  content={text.content}
+                  onDragEnd={handleTextDragEnd}
+                  activeTool={activeTool}
+                  isEditing={editingTextId === text.id}
+                  onClick={handleTextClick}
+                  onDelete={handleTextDelete}
+                  fontSize={20}
                 />
               ))}
             </Layer>

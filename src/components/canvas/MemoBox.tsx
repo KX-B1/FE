@@ -9,6 +9,7 @@ interface MemoBoxProps {
   content: string;
   onDragEnd: (id: number, x: number, y: number) => void;
   onClick: (id: number) => void;
+  onDelete: (id: number) => void;
   activeTool: ToolType;
   isEditing: boolean;
 }
@@ -20,6 +21,7 @@ export default function MemoBox({
   content,
   onDragEnd,
   onClick,
+  onDelete,
   activeTool,
   isEditing,
 }: MemoBoxProps) {
@@ -34,9 +36,21 @@ export default function MemoBox({
     >
       <Rect width={160} height={160} fill="#f5e88a" cornerRadius={12} />
       {!isEditing && (
-        <Text text={content} width={144} x={8} y={8} fontSize={16} />
+        <Text text={content} width={120} x={8} y={8} fontSize={16} />
       )}
-      {img && <KonvaImage image={img} width={12} height={12} x={142} y={6} />}
+      {deleteIcon && (
+        <KonvaImage
+          image={deleteIcon}
+          width={12}
+          height={12}
+          x={142}
+          y={6}
+          onClick={() => {
+            const confirmed = confirm('정말 삭제하시겠습니까?');
+            if (confirmed) onDelete(id);
+          }}
+        />
+      )}
     </Group>
   );
 }

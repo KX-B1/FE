@@ -46,6 +46,10 @@ export default function CanvasArea() {
     );
   };
 
+  const handleMemoDelete = (id: number) => {
+    setMemos((prevMemos) => prevMemos.filter((memo) => memo.id !== id));
+  };
+
   const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     const droppedAsset = JSON.parse(e.dataTransfer.getData('application/json'));
@@ -200,6 +204,7 @@ export default function CanvasArea() {
                   activeTool={activeTool}
                   isEditing={editingMemoId === memo.id}
                   onClick={handleMemoClick}
+                  onDelete={handleMemoDelete}
                 />
               ))}
             </Layer>

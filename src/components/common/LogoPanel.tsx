@@ -1,26 +1,36 @@
 'use client';
 
-import { PanelLeft } from 'lucide-react';
 import Image from 'next/image';
 import { useViewModeStore } from '@/stores/viewModeStore';
+import PanelToggleButton from '@/components/common/Panel';
 
-export default function LogoPanel() {
+interface LogoPanelProps {
+  logoSrc?: string;
+  onLogoClick?: () => void;
+  showPanelToggle?: boolean;
+}
+
+export default function LogoPanel({
+  logoSrc,
+  onLogoClick,
+  showPanelToggle = true,
+}: LogoPanelProps) {
+  const isPanelOpen = useViewModeStore((state) => state.isPanelOpen);
   const toggleAssetPanel = useViewModeStore((state) => state.toggleAssetPanel);
 
   return (
-    <div className="flex items-center gap-10 p-2.5">
-      <div className="flex items-center gap-5">
-        <Image src="/logo.svg" alt="로고" width={40} height={40} />
-        <span className="text-[26px] font-bold text-text-primary">LOGO</span>
-      </div>
-
+    <div className="flex items-center gap-15 p-2.5">
       <button
-        type="button"
-        onClick={toggleAssetPanel}
-        className="text-text-secondary hover:text-text-primary"
+        onClick={onLogoClick}
+        className="flex items-center gap-5 cursor-pointer"
       >
-        <PanelLeft size={24} />
+        <Image src={logoSrc ?? '/logo.svg'} alt="로고" width={40} height={40} />
+        <span className="text-[26px] font-bold text-text-primary">LOGO</span>
       </button>
+
+      {showPanelToggle && (
+        <PanelToggleButton isOpen={isPanelOpen} onToggle={toggleAssetPanel} />
+      )}
     </div>
   );
 }

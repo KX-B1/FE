@@ -1,4 +1,4 @@
-import { ToolType } from '@/components/canvas/CanvasArea';
+import { ElementType, ToolType } from '@/components/canvas/CanvasArea';
 import { Group, Rect, Image as KonvaImage, Text } from 'react-konva';
 import useImage from 'use-image';
 
@@ -10,6 +10,7 @@ interface MemoBoxProps {
   onDragEnd: (id: number, x: number, y: number) => void;
   onClick: (id: number) => void;
   onDelete: (id: number) => void;
+  onArrowConnect: (id: number, type: ElementType) => void;
   activeTool: ToolType;
   isEditing: boolean;
 }
@@ -22,6 +23,7 @@ export default function MemoBox({
   onDragEnd,
   onClick,
   onDelete,
+  onArrowConnect,
   activeTool,
   isEditing,
 }: MemoBoxProps) {
@@ -32,7 +34,13 @@ export default function MemoBox({
       y={y}
       draggable={activeTool === 'pointer'}
       onDragEnd={(e) => onDragEnd(id, e.target.x(), e.target.y())}
-      onClick={() => onClick(id)}
+      onClick={() => {
+        if (activeTool === 'arrow') {
+          onArrowConnect(id, 'memo');
+        } else {
+          onClick(id);
+        }
+      }}
     >
       <Rect width={160} height={160} fill="#f5e88a" cornerRadius={12} />
       {!isEditing && (
@@ -45,9 +53,9 @@ export default function MemoBox({
           height={12}
           x={142}
           y={6}
-          onClick={() => {
-            const confirmed = confirm('정말 삭제하시겠습니까?');
-            if (confirmed) onDelete(id);
+          onClick={(e) => {
+            e.cancelBubble = true;
+            onDelete(id);
           }}
         />
       )}

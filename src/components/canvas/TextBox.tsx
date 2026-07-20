@@ -1,4 +1,4 @@
-import { ToolType } from '@/components/canvas/CanvasArea';
+import { ElementType, ToolType } from '@/components/canvas/CanvasArea';
 import { Group, Rect, Image as KonvaImage, Text } from 'react-konva';
 import useImage from 'use-image';
 
@@ -11,6 +11,7 @@ interface TextBoxProps {
   onDragEnd: (id: number, x: number, y: number) => void;
   onClick: (id: number) => void;
   onDelete: (id: number) => void;
+  onArrowConnect: (id: number, type: ElementType) => void;
   activeTool: ToolType;
   isEditing: boolean;
 }
@@ -24,6 +25,7 @@ export default function TextBox({
   onDragEnd,
   onClick,
   onDelete,
+  onArrowConnect,
   activeTool,
   isEditing,
 }: TextBoxProps) {
@@ -34,7 +36,13 @@ export default function TextBox({
       y={y}
       draggable={activeTool === 'pointer'}
       onDragEnd={(e) => onDragEnd(id, e.target.x(), e.target.y())}
-      onClick={() => onClick(id)}
+      onClick={() => {
+        if (activeTool === 'arrow') {
+          onArrowConnect(id, 'text');
+        } else {
+          onClick(id);
+        }
+      }}
     >
       <Rect
         width={120}
@@ -60,9 +68,9 @@ export default function TextBox({
           height={12}
           x={102}
           y={6}
-          onClick={() => {
-            const confirmed = confirm('정말 삭제하시겠습니까?');
-            if (confirmed) onDelete(id);
+          onClick={(e) => {
+            e.cancelBubble = true;
+            onDelete(id);
           }}
         />
       )}

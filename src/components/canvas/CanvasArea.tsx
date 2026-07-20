@@ -1,5 +1,6 @@
 'use client';
 
+import ArrowLine from '@/components/canvas/ArrowLine';
 import MemoBox from '@/components/canvas/MemoBox';
 import PenLine from '@/components/canvas/PenLine';
 import ProjectName from '@/components/canvas/ProjectName';
@@ -9,6 +10,13 @@ import Toolbar from '@/components/canvas/Toolbar';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { useEffect, useRef, useState } from 'react';
 import { Layer, Line, Stage } from 'react-konva';
+
+interface Shot {
+  id: number;
+  x: number;
+  y: number;
+  imageUrl: string;
+}
 
 interface Memo {
   id: number;
@@ -32,11 +40,14 @@ interface PenLine {
   strokeWidth: number; // 고정 2
 }
 
-interface Shot {
+export type ElementType = 'shot' | 'memo' | 'text' | 'pen';
+
+interface Arrow {
   id: number;
-  x: number;
-  y: number;
-  imageUrl: string;
+  fromId: number;
+  fromType: ElementType; // 'shot' | 'memo' | 'text' | 'pen' 중 하나만 들어올 수 있음
+  toId: number;
+  toType: ElementType; // 'shot' | 'memo' | 'text' | 'pen' 중 하나만 들어올 수 있음
 }
 
 export type ToolType = 'pointer' | 'move' | 'arrow' | 'pen' | 'note' | 'text';
@@ -222,6 +233,59 @@ export default function CanvasArea() {
     setPenLines((prevPens) => prevPens.filter((pen) => pen.id !== id));
   };
 
+  const handleElementClick = (id: number, type: ElementType) => {
+    console.log('clicked:', id, type, 'connectingFrom:', connectingFrom);
+    if (connectingFrom) {
+      const newArrow: Arrow = {
+        id: arrowNextId.current++,
+        fromId: connectingFrom.id,
+        fromType: connectingFrom.type,
+        toId: id,
+        toType: type,
+      };
+      setArrows((prev) => [...prev, newArrow]);
+      setConnectingFrom(null);
+    } else {
+      setConnectingFrom({ id, type });
+    }
+  };
+
+  const getAnchorPosition = (
+    id: number,
+    type: ElementType
+  ): { x: number; y: number } | null => {
+    switch (type) {
+      case 'shot': {
+        const shot = shots.find((s) => s.id === id);
+        if (!shot) return null;
+        return { x: shot.x + 90, y: shot.y + 60 };
+      }
+      case 'memo': {
+        const memo = memos.find((m) => m.id === id);
+        if (!memo) return null;
+        return { x: memo.x + 80, y: memo.y + 80 };
+      }
+      case 'text': {
+        const text = texts.find((t) => t.id === id);
+        if (!text) return null;
+        return { x: text.x + 60, y: text.y + 14 };
+      }
+      case 'pen': {
+        const pen = penLines.find((p) => p.id === id);
+        if (!pen) return null;
+        const lastX = pen.points[pen.points.length - 2];
+        const lastY = pen.points[pen.points.length - 1];
+        return { x: lastX, y: lastY };
+      }
+      default:
+        return null;
+    }
+  };
+
+  const handleArrowDelete = (id: number) => {
+    setArrows((prevArrows) => prevArrows.filter((arrow) => arrow.id !== id));
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -266,6 +330,13 @@ export default function CanvasArea() {
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const penNextId = useRef(0);
 
+  const [arrows, setArrows] = useState<Arrow[]>([]);
+  const arrowNextId = useRef(0);
+  const [connectingFrom, setConnectingFrom] = useState<{
+    id: number;
+    type: ElementType;
+  } | null>(null);
+
   return (
     <>
       {/* 최상위 wrapper → 제목 입력 영역 + stage 영역 + 툴바 */}
@@ -275,7 +346,7 @@ export default function CanvasArea() {
         {/* ■ 2. 캔버스 - Stage 영역 */}
         <div
           ref={containerRef}
-          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' || activeTool === 'pen' ? 'cursor-crosshair' : ''}`}
+          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' || activeTool === 'pen' || activeTool === 'arrow' ? 'cursor-crosshair' : ''}`}
           onDragOver={(e) => {
             e.preventDefault();
           }}
@@ -349,7 +420,9 @@ export default function CanvasArea() {
                   x={shot.x}
                   y={shot.y}
                   label={`shot ${index + 1}`}
+                  activeTool={activeTool}
                   onDragEnd={handleDragEnd}
+                  onArrowConnect={handleElementClick}
                 />
               ))}
             </Layer>
@@ -367,6 +440,7 @@ export default function CanvasArea() {
                   isEditing={editingMemoId === memo.id}
                   onClick={handleMemoClick}
                   onDelete={handleMemoDelete}
+                  onArrowConnect={handleElementClick}
                 />
               ))}
               {texts.map((text) => (
@@ -381,6 +455,7 @@ export default function CanvasArea() {
                   isEditing={editingTextId === text.id}
                   onClick={handleTextClick}
                   onDelete={handleTextDelete}
+                  onArrowConnect={handleElementClick}
                   fontSize={20}
                 />
               ))}
@@ -391,7 +466,9 @@ export default function CanvasArea() {
                   points={line.points}
                   color={line.color}
                   strokeWidth={line.strokeWidth}
+                  activeTool={activeTool}
                   onDelete={handlePenDelete}
+                  onArrowConnect={handleElementClick}
                 />
               ))}
               {currentLine && (
@@ -403,6 +480,23 @@ export default function CanvasArea() {
                   lineJoin="round"
                 />
               )}
+              {arrows.map((arrow) => {
+                const from = getAnchorPosition(arrow.fromId, arrow.fromType);
+                const to = getAnchorPosition(arrow.toId, arrow.toType);
+                if (!from || !to) return null;
+
+                return (
+                  <ArrowLine
+                    id={arrow.id}
+                    key={arrow.id}
+                    fromX={from.x}
+                    fromY={from.y}
+                    toX={to.x}
+                    toY={to.y}
+                    onDelete={handleArrowDelete}
+                  />
+                );
+              })}
             </Layer>
           </Stage>
           {/* ■ 3. 캔버스 - 툴바 영역 */}

@@ -1,13 +1,14 @@
 'use client';
 
 import MemoBox from '@/components/canvas/MemoBox';
+import PenLine from '@/components/canvas/PenLine';
 import ProjectName from '@/components/canvas/ProjectName';
 import ShotCard from '@/components/canvas/ShotCard';
 import TextBox from '@/components/canvas/TextBox';
 import Toolbar from '@/components/canvas/Toolbar';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { useEffect, useRef, useState } from 'react';
-import { Layer, Stage } from 'react-konva';
+import { Layer, Line, Stage } from 'react-konva';
 
 interface Memo {
   id: number;
@@ -24,6 +25,13 @@ interface TextBoxData {
   fontSize: number;
 }
 
+interface PenLine {
+  id: number;
+  points: number[]; // [x1,y1,x2,y2,...]
+  color: string; // '#FFFFFF' | '#CA6180' | '#0055DA'
+  strokeWidth: number; // 고정 2
+}
+
 interface Shot {
   id: number;
   x: number;
@@ -31,7 +39,7 @@ interface Shot {
   imageUrl: string;
 }
 
-export type ToolType = 'pointer' | 'move' | 'pen' | 'note' | 'text';
+export type ToolType = 'pointer' | 'move' | 'arrow' | 'pen' | 'note' | 'text';
 
 export default function CanvasArea() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,24 +82,12 @@ export default function CanvasArea() {
     setActiveTool(tool);
   };
 
-  const handleMemoDragEnd = (id: number, x: number, y: number) => {
-    setMemos((prevMemos) =>
-      prevMemos.map((memo) => (memo.id === id ? { ...memo, x, y } : memo))
-    );
-  };
-
-  const handleMemoContentChange = (id: number, content: string) => {
-    setMemos((prevMemos) =>
-      prevMemos.map((memo) => (memo.id === id ? { ...memo, content } : memo))
-    );
-  };
-
-  const handleMemoDelete = (id: number) => {
-    setMemos((prevMemos) => prevMemos.filter((memo) => memo.id !== id));
-  };
-
-  const handleMemoClick = (id: number) => {
-    setEditingMemoId(id);
+  const handleStageClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool === 'note') {
+      handleCreateMemo(e);
+    } else if (activeTool === 'text') {
+      handleCreateTextBox(e);
+    }
   };
 
   const handleCreateMemo = (e: KonvaEventObject<MouseEvent>) => {
@@ -110,13 +106,28 @@ export default function CanvasArea() {
       content: '',
     };
     setMemos([...memos, newMemo]);
+    setEditingMemoId(newMemo.id);
     setActiveTool('pointer');
   };
 
-  const handleTextDragEnd = (id: number, x: number, y: number) => {
-    setTexts((prevTexts) =>
-      prevTexts.map((text) => (text.id === id ? { ...text, x, y } : text))
+  const handleMemoDragEnd = (id: number, x: number, y: number) => {
+    setMemos((prevMemos) =>
+      prevMemos.map((memo) => (memo.id === id ? { ...memo, x, y } : memo))
     );
+  };
+
+  const handleMemoContentChange = (id: number, content: string) => {
+    setMemos((prevMemos) =>
+      prevMemos.map((memo) => (memo.id === id ? { ...memo, content } : memo))
+    );
+  };
+
+  const handleMemoDelete = (id: number) => {
+    setMemos((prevMemos) => prevMemos.filter((memo) => memo.id !== id));
+  };
+
+  const handleMemoClick = (id: number) => {
+    setEditingMemoId(id);
   };
 
   const handleCreateTextBox = (e: KonvaEventObject<MouseEvent>) => {
@@ -140,6 +151,12 @@ export default function CanvasArea() {
     setActiveTool('pointer');
   };
 
+  const handleTextDragEnd = (id: number, x: number, y: number) => {
+    setTexts((prevTexts) =>
+      prevTexts.map((text) => (text.id === id ? { ...text, x, y } : text))
+    );
+  };
+
   const handleTextContentChange = (id: number, content: string) => {
     if (content.length > 6) return;
     setTexts((prevTexts) =>
@@ -155,12 +172,54 @@ export default function CanvasArea() {
     setTexts((prevTexts) => prevTexts.filter((text) => text.id !== id));
   };
 
-  const handleStageClick = (e: KonvaEventObject<MouseEvent>) => {
-    if (activeTool === 'note') {
-      handleCreateMemo(e);
-    } else if (activeTool === 'text') {
-      handleCreateTextBox(e);
-    }
+  const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool !== 'pen') return;
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const pointerPosition = stage.getPointerPosition();
+    if (!pointerPosition) return;
+
+    const numberedPosition = [pointerPosition.x, pointerPosition.y];
+
+    setCurrentLine({
+      color: selectedColor,
+      points: numberedPosition,
+      strokeWidth: 2,
+    });
+
+    setIsDrawing(true);
+  };
+
+  const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool !== 'pen') return;
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const pointerPosition = stage.getPointerPosition();
+    if (!pointerPosition) return;
+
+    if (!isDrawing || !currentLine) return;
+    setCurrentLine({
+      ...currentLine,
+      points: [...currentLine.points, pointerPosition.x, pointerPosition.y],
+    });
+  };
+
+  const handleMouseUp = () => {
+    if (activeTool !== 'pen') return;
+    if (!currentLine) return;
+
+    setPenLines((prev) => [
+      ...prev,
+      { ...currentLine, id: penNextId.current++ },
+    ]);
+    setCurrentLine(null);
+    setIsDrawing(false);
+  };
+
+  const handlePenDelete = (id: number) => {
+    setPenLines((prevPens) => prevPens.filter((pen) => pen.id !== id));
   };
 
   useEffect(() => {
@@ -187,17 +246,25 @@ export default function CanvasArea() {
     { id: 8, x: 220, y: 300, imageUrl: '' },
     { id: 9, x: 420, y: 300, imageUrl: '' },
   ]);
+  const [activeTool, setActiveTool] = useState<ToolType>('pointer');
+
   const [memos, setMemos] = useState<Memo[]>([]);
-  const [texts, setTexts] = useState<TextBoxData[]>([]);
   const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
+  const editingMemo = memos.find((memo) => memo.id === editingMemoId);
+  const memoNextId = useRef(0);
+
+  const [texts, setTexts] = useState<TextBoxData[]>([]);
   const [editingTextId, setEditingTextId] = useState<number | null>(null);
   const editingText = texts.find((text) => text.id === editingTextId);
-  const editingMemo = memos.find((memo) => memo.id === editingMemoId);
-  const [activeTool, setActiveTool] = useState<ToolType>('pointer');
-  const memoNextId = useRef(0);
   const textNextId = useRef(0);
 
-  console.log('editingMemoId:', editingMemoId);
+  const [penLines, setPenLines] = useState<PenLine[]>([]);
+  const [currentLine, setCurrentLine] = useState<Omit<PenLine, 'id'> | null>(
+    null
+  );
+  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const penNextId = useRef(0);
 
   return (
     <>
@@ -208,7 +275,7 @@ export default function CanvasArea() {
         {/* ■ 2. 캔버스 - Stage 영역 */}
         <div
           ref={containerRef}
-          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' ? 'cursor-crosshair' : ''}`}
+          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' || activeTool === 'pen' ? 'cursor-crosshair' : ''}`}
           onDragOver={(e) => {
             e.preventDefault();
           }}
@@ -216,6 +283,7 @@ export default function CanvasArea() {
         >
           {editingMemo && (
             <textarea
+              autoFocus
               spellCheck={false}
               value={editingMemo.content}
               className="absolute"
@@ -226,6 +294,9 @@ export default function CanvasArea() {
                 height: 160,
                 resize: 'none',
                 zIndex: 10,
+                outline: 'none',
+                border: 'none',
+                padding: 0,
               }}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 handleMemoContentChange(editingMemo.id, e.target.value)
@@ -262,6 +333,9 @@ export default function CanvasArea() {
             width={size.width}
             height={size.height}
             onClick={handleStageClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
           >
             {/* 2-a. 격자 배경 레이어 */}
             <Layer id="background"></Layer>
@@ -310,6 +384,25 @@ export default function CanvasArea() {
                   fontSize={20}
                 />
               ))}
+              {penLines.map((line) => (
+                <PenLine
+                  key={line.id}
+                  id={line.id}
+                  points={line.points}
+                  color={line.color}
+                  strokeWidth={line.strokeWidth}
+                  onDelete={handlePenDelete}
+                />
+              ))}
+              {currentLine && (
+                <Line
+                  points={currentLine.points}
+                  stroke={currentLine.color}
+                  strokeWidth={currentLine.strokeWidth}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              )}
             </Layer>
           </Stage>
           {/* ■ 3. 캔버스 - 툴바 영역 */}

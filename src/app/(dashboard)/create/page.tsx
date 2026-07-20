@@ -4,7 +4,7 @@ import StoryboardCreateForm from '@/components/create/StoryboardCreateForm';
 export default function CreatePage() {
   return (
     <>
-      <Header variant="project" />
+      <Header />
       <StoryboardCreateForm />
     </>
   );

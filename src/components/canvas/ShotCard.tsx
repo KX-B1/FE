@@ -29,7 +29,7 @@ export default function ShotCard({
     <Group
       x={x}
       y={y}
-      draggable
+      draggable={activeTool === 'pointer'}
       onDragEnd={(e) => onDragEnd(id, e.target.x(), e.target.y())}
       onClick={() => {
         if (activeTool === 'arrow') {

@@ -286,6 +286,17 @@ export default function CanvasArea() {
     setArrows((prevArrows) => prevArrows.filter((arrow) => arrow.id !== id));
   };
 
+  const stageHandleDragEnd = (x: number, y: number) => {
+    setStagePos({ x, y });
+  };
+
+  const stageDragBoundFunc = (pos: { x: number; y: number }) => {
+    return {
+      x: Math.max(-1000, Math.min(1000, pos.x)),
+      y: Math.max(-1000, Math.min(1000, pos.y)),
+    };
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -337,6 +348,12 @@ export default function CanvasArea() {
     type: ElementType;
   } | null>(null);
 
+  const [stagePos, setStagePos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false);
+
   return (
     <>
       {/* 최상위 wrapper → 제목 입력 영역 + stage 영역 + 툴바 */}
@@ -346,7 +363,7 @@ export default function CanvasArea() {
         {/* ■ 2. 캔버스 - Stage 영역 */}
         <div
           ref={containerRef}
-          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' || activeTool === 'pen' || activeTool === 'arrow' ? 'cursor-crosshair' : ''}`}
+          className={`flex-1 relative ${activeTool === 'note' || activeTool === 'text' || activeTool === 'pen' || activeTool === 'arrow' ? 'cursor-crosshair' : activeTool === 'move' ? (isDraggingStage ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
           onDragOver={(e) => {
             e.preventDefault();
           }}
@@ -407,6 +424,15 @@ export default function CanvasArea() {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            x={stagePos.x}
+            y={stagePos.y}
+            draggable={activeTool === 'move'}
+            onDragEnd={(e) => {
+              stageHandleDragEnd(e.target.x(), e.target.y());
+              setIsDraggingStage(false);
+            }}
+            onDragStart={() => setIsDraggingStage(true)}
+            dragBoundFunc={stageDragBoundFunc}
           >
             {/* 2-a. 격자 배경 레이어 */}
             <Layer id="background"></Layer>

@@ -42,7 +42,7 @@ export default function MemoBox({
         }
       }}
     >
-      <Rect width={160} height={160} fill="#f5e88a" cornerRadius={12} />
+      <Rect width={125} height={125} fill="#FEFD99" cornerRadius={6} />
       {!isEditing && (
         <Text text={content} width={120} x={8} y={8} fontSize={16} />
       )}
@@ -51,7 +51,7 @@ export default function MemoBox({
           image={deleteIcon}
           width={12}
           height={12}
-          x={142}
+          x={125 - 12 - 6}
           y={6}
           onClick={(e) => {
             e.cancelBubble = true;

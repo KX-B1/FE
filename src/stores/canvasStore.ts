@@ -6,6 +6,6 @@ interface CanvasNameState {
 }
 
 export const useCanvasNameStore = create<CanvasNameState>((set) => ({
-  canvasName: '프로젝트명을 입력하세요',
+  canvasName: '',
   setCanvasName: (canvasName) => set({ canvasName }),
 }));

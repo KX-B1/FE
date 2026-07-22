@@ -376,8 +376,8 @@ export default function CanvasArea() {
               value={editingMemo.content}
               className="absolute"
               style={{
-                left: editingMemo.x,
-                top: editingMemo.y,
+                left: editingMemo.x + stagePos.x,
+                top: editingMemo.y + stagePos.y,
                 width: 160,
                 height: 160,
                 resize: 'none',
@@ -385,6 +385,7 @@ export default function CanvasArea() {
                 outline: 'none',
                 border: 'none',
                 padding: 0,
+                caretColor: 'var(--color-surface)',
               }}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 handleMemoContentChange(editingMemo.id, e.target.value)
@@ -400,8 +401,8 @@ export default function CanvasArea() {
               value={editingText.content}
               className="absolute"
               style={{
-                left: editingText.x,
-                top: editingText.y,
+                left: editingText.x + stagePos.x,
+                top: editingText.y + stagePos.y,
                 width: 120,
                 height: 28,
                 resize: 'none',
@@ -428,6 +429,7 @@ export default function CanvasArea() {
             y={stagePos.y}
             draggable={activeTool === 'move'}
             onDragEnd={(e) => {
+              if (e.target !== e.target.getStage()) return;
               stageHandleDragEnd(e.target.x(), e.target.y());
               setIsDraggingStage(false);
             }}

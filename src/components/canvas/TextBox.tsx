@@ -12,8 +12,10 @@ interface TextBoxProps {
   onClick: (id: number) => void;
   onDelete: (id: number) => void;
   onArrowConnect: (id: number, type: ElementType) => void;
+  onEditStart: (id: number) => void;
   activeTool: ToolType;
   isEditing: boolean;
+  isSelected: boolean;
 }
 
 export default function TextBox({
@@ -26,8 +28,10 @@ export default function TextBox({
   onClick,
   onDelete,
   onArrowConnect,
+  onEditStart,
   activeTool,
   isEditing,
+  isSelected,
 }: TextBoxProps) {
   const [deleteIcon] = useImage('/canvas-delete-button.svg');
   return (
@@ -43,12 +47,13 @@ export default function TextBox({
           onClick(id);
         }
       }}
+      onDblClick={() => onEditStart(id)}
     >
       <Rect
         width={120}
         height={28}
         fill="transparent"
-        stroke={isEditing ? '#394257' : undefined}
+        stroke={isEditing ? '#394257' : isSelected ? '#394257' : undefined}
         dash={isEditing ? [4, 4] : undefined}
       />
       {!isEditing && (

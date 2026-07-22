@@ -24,7 +24,7 @@ export default function ExportDropdown({ onExport }: ExportDropdownProps) {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2.5 rounded-full bg-secondary-400 py-2.5 pl-7.5 pr-5 text-base font-medium text-card"
+        className="flex items-center gap-2.5 rounded-full bg-secondary-400 py-2.5 pl-7.5 pr-5 text-base font-medium text-card cursor-pointer"
       >
         내보내기
         <ChevronDown

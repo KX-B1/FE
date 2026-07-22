@@ -1,8 +1,8 @@
 'use client';
 
 import AssetSidebar from '@/components/canvas/AssetSidebar';
+import Header from '@/components/common/Header';
 import ModeSwitcher from '@/components/common/ModeSwitcher';
-import ProjectHeader from '@/components/common/ProjectHeader';
 
 export default function MainPage() {
   const handleSave = () => {
@@ -15,7 +15,7 @@ export default function MainPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <ProjectHeader onSave={handleSave} onExport={handleExport} />
+      <Header variant="project" onSave={handleSave} onExport={handleExport} />
       <div className="flex flex-1">
         <AssetSidebar />
         <ModeSwitcher />

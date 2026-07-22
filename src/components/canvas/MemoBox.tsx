@@ -11,8 +11,10 @@ interface MemoBoxProps {
   onClick: (id: number) => void;
   onDelete: (id: number) => void;
   onArrowConnect: (id: number, type: ElementType) => void;
+  onEditStart: (id: number) => void;
   activeTool: ToolType;
   isEditing: boolean;
+  isSelected: boolean;
 }
 
 export default function MemoBox({
@@ -24,8 +26,10 @@ export default function MemoBox({
   onClick,
   onDelete,
   onArrowConnect,
+  onEditStart,
   activeTool,
   isEditing,
+  isSelected,
 }: MemoBoxProps) {
   const [deleteIcon] = useImage('/canvas-delete-button.svg');
   return (
@@ -41,8 +45,16 @@ export default function MemoBox({
           onClick(id);
         }
       }}
+      onDblClick={() => onEditStart(id)}
     >
-      <Rect width={125} height={125} fill="#FEFD99" cornerRadius={6} />
+      <Rect
+        width={125}
+        height={125}
+        fill="#FEFD99"
+        cornerRadius={6}
+        stroke={isSelected ? '#394257' : undefined}
+        strokeWidth={isSelected ? 2 : undefined}
+      />
       {!isEditing && (
         <Text text={content} width={120} x={8} y={8} fontSize={16} />
       )}

@@ -10,6 +10,8 @@ interface PenLineProps {
   activeTool: ToolType;
   onDelete: (id: number) => void;
   onArrowConnect: (id: number, type: ElementType) => void;
+  onClick: (id: number) => void;
+  isSelected: boolean;
 }
 
 export default function PenLine({
@@ -20,6 +22,8 @@ export default function PenLine({
   activeTool,
   onDelete,
   onArrowConnect,
+  onClick,
+  isSelected,
 }: PenLineProps) {
   const [deleteIcon] = useImage('/canvas-delete-button.svg');
   const lastX = points[points.length - 2];
@@ -30,12 +34,14 @@ export default function PenLine({
       <Line
         points={points}
         stroke={color}
-        strokeWidth={strokeWidth}
+        strokeWidth={isSelected ? strokeWidth + 2 : strokeWidth}
         lineCap="round"
         lineJoin="round"
         onClick={() => {
           if (activeTool === 'arrow') {
             onArrowConnect(id, 'pen');
+          } else {
+            onClick(id);
           }
         }}
       />

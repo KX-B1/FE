@@ -1,6 +1,7 @@
 'use client';
 
 import ArrowLine from '@/components/canvas/ArrowLine';
+import AssetImage from '@/components/canvas/AssetImage';
 import MemoBox from '@/components/canvas/MemoBox';
 import PenLine from '@/components/canvas/PenLine';
 import ProjectName from '@/components/canvas/ProjectName';
@@ -40,7 +41,14 @@ interface PenLine {
   strokeWidth: number; // 고정 2
 }
 
-export type ElementType = 'shot' | 'memo' | 'text' | 'pen';
+interface Asset {
+  id: number;
+  x: number;
+  y: number;
+  imageUrl: string;
+}
+
+export type ElementType = 'shot' | 'memo' | 'text' | 'pen' | 'asset';
 
 interface Arrow {
   id: number;
@@ -53,8 +61,60 @@ interface Arrow {
 export type ToolType = 'pointer' | 'move' | 'arrow' | 'pen' | 'note' | 'text';
 
 export default function CanvasArea() {
+  const [selectedElement, setSelectedElement] = useState<{
+    id: number;
+    type: ElementType;
+  } | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
+
+  const [shots, setShots] = useState<Shot[]>([
+    { id: 1, x: 20, y: 20, imageUrl: '/canvas-shotcard.svg' },
+    { id: 2, x: 220, y: 20, imageUrl: '' },
+    { id: 3, x: 420, y: 20, imageUrl: '' },
+    { id: 4, x: 20, y: 160, imageUrl: '' },
+    { id: 5, x: 220, y: 160, imageUrl: '' },
+    { id: 6, x: 420, y: 160, imageUrl: '' },
+    { id: 7, x: 20, y: 300, imageUrl: '' },
+    { id: 8, x: 220, y: 300, imageUrl: '' },
+    { id: 9, x: 420, y: 300, imageUrl: '' },
+  ]);
+  const [activeTool, setActiveTool] = useState<ToolType>('pointer');
+
+  const [memos, setMemos] = useState<Memo[]>([]);
+  const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
+  const editingMemo = memos.find((memo) => memo.id === editingMemoId);
+  const memoNextId = useRef(0);
+
+  const [texts, setTexts] = useState<TextBoxData[]>([]);
+  const [editingTextId, setEditingTextId] = useState<number | null>(null);
+  const editingText = texts.find((text) => text.id === editingTextId);
+  const textNextId = useRef(0);
+
+  const [penLines, setPenLines] = useState<PenLine[]>([]);
+  const [currentLine, setCurrentLine] = useState<Omit<PenLine, 'id'> | null>(
+    null
+  );
+  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const penNextId = useRef(0);
+
+  const [arrows, setArrows] = useState<Arrow[]>([]);
+  const arrowNextId = useRef(0);
+  const [connectingFrom, setConnectingFrom] = useState<{
+    id: number;
+    type: ElementType;
+  } | null>(null);
+
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const assetNextId = useRef(0);
+
+  const [stagePos, setStagePos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false);
 
   const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -73,14 +133,15 @@ export default function CanvasArea() {
         dropPosition.y <= shot.y + SLOT_HEIGHT
       );
     });
-    if (!matchedShot) return;
-    setShots((prev) =>
-      prev.map((shot) =>
-        shot.id === matchedShot.id
-          ? { ...shot, imageUrl: droppedAsset.imageUrl }
-          : shot
-      )
-    );
+    if (matchedShot) return;
+
+    const newAsset = {
+      id: assetNextId.current++,
+      x: dropPosition.x,
+      y: dropPosition.y,
+      imageUrl: droppedAsset.imageUrl,
+    };
+    setAssets([...assets, newAsset]);
   };
 
   const handleDragEnd = (id: number, x: number, y: number) => {
@@ -98,6 +159,8 @@ export default function CanvasArea() {
       handleCreateMemo(e);
     } else if (activeTool === 'text') {
       handleCreateTextBox(e);
+    } else if (activeTool === 'pointer' && e.target === e.target.getStage()) {
+      setSelectedElement(null);
     }
   };
 
@@ -138,7 +201,7 @@ export default function CanvasArea() {
   };
 
   const handleMemoClick = (id: number) => {
-    setEditingMemoId(id);
+    setSelectedElement({ id, type: 'memo' });
   };
 
   const handleCreateTextBox = (e: KonvaEventObject<MouseEvent>) => {
@@ -176,7 +239,7 @@ export default function CanvasArea() {
   };
 
   const handleTextClick = (id: number) => {
-    setEditingTextId(id);
+    setSelectedElement({ id, type: 'text' });
   };
 
   const handleTextDelete = (id: number) => {
@@ -229,6 +292,10 @@ export default function CanvasArea() {
     setIsDrawing(false);
   };
 
+  const handlePenClick = (id: number) => {
+    setSelectedElement({ id, type: 'pen' });
+  };
+
   const handlePenDelete = (id: number) => {
     setPenLines((prevPens) => prevPens.filter((pen) => pen.id !== id));
   };
@@ -263,7 +330,7 @@ export default function CanvasArea() {
       case 'memo': {
         const memo = memos.find((m) => m.id === id);
         if (!memo) return null;
-        return { x: memo.x + 80, y: memo.y + 80 };
+        return { x: memo.x + 62.5, y: memo.y + 62.5 };
       }
       case 'text': {
         const text = texts.find((t) => t.id === id);
@@ -276,6 +343,11 @@ export default function CanvasArea() {
         const lastX = pen.points[pen.points.length - 2];
         const lastY = pen.points[pen.points.length - 1];
         return { x: lastX, y: lastY };
+      }
+      case 'asset': {
+        const asset = assets.find((a) => a.id === id);
+        if (!asset) return null;
+        return { x: asset.x + 48, y: asset.y + 48 };
       }
       default:
         return null;
@@ -297,6 +369,44 @@ export default function CanvasArea() {
     };
   };
 
+  const handleAssetClick = (id: number) => {
+    setSelectedElement({ id, type: 'asset' });
+  };
+
+  const handleAssetDragEnd = (id: number, x: number, y: number) => {
+    setAssets((prevAssets) =>
+      prevAssets.map((asset) => (asset.id === id ? { ...asset, x, y } : asset))
+    );
+  };
+
+  const handleAssetDelete = (id: number) => {
+    setAssets((prevAssets) => prevAssets.filter((asset) => asset.id !== id));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Backspace') return;
+
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') return;
+
+      if (!selectedElement) return;
+
+      if (selectedElement.type === 'memo') handleMemoDelete(selectedElement.id);
+      else if (selectedElement.type === 'text')
+        handleTextDelete(selectedElement.id);
+      else if (selectedElement.type === 'pen')
+        handlePenDelete(selectedElement.id);
+      else if (selectedElement.type === 'asset')
+        handleAssetDelete(selectedElement.id);
+
+      setSelectedElement(null);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedElement]);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -309,50 +419,6 @@ export default function CanvasArea() {
       observer.disconnect();
     };
   }, []);
-
-  const [shots, setShots] = useState<Shot[]>([
-    { id: 1, x: 20, y: 20, imageUrl: '/canvas-shotcard.svg' },
-    { id: 2, x: 220, y: 20, imageUrl: '' },
-    { id: 3, x: 420, y: 20, imageUrl: '' },
-    { id: 4, x: 20, y: 160, imageUrl: '' },
-    { id: 5, x: 220, y: 160, imageUrl: '' },
-    { id: 6, x: 420, y: 160, imageUrl: '' },
-    { id: 7, x: 20, y: 300, imageUrl: '' },
-    { id: 8, x: 220, y: 300, imageUrl: '' },
-    { id: 9, x: 420, y: 300, imageUrl: '' },
-  ]);
-  const [activeTool, setActiveTool] = useState<ToolType>('pointer');
-
-  const [memos, setMemos] = useState<Memo[]>([]);
-  const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
-  const editingMemo = memos.find((memo) => memo.id === editingMemoId);
-  const memoNextId = useRef(0);
-
-  const [texts, setTexts] = useState<TextBoxData[]>([]);
-  const [editingTextId, setEditingTextId] = useState<number | null>(null);
-  const editingText = texts.find((text) => text.id === editingTextId);
-  const textNextId = useRef(0);
-
-  const [penLines, setPenLines] = useState<PenLine[]>([]);
-  const [currentLine, setCurrentLine] = useState<Omit<PenLine, 'id'> | null>(
-    null
-  );
-  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
-  const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const penNextId = useRef(0);
-
-  const [arrows, setArrows] = useState<Arrow[]>([]);
-  const arrowNextId = useRef(0);
-  const [connectingFrom, setConnectingFrom] = useState<{
-    id: number;
-    type: ElementType;
-  } | null>(null);
-
-  const [stagePos, setStagePos] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-  const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false);
 
   return (
     <>
@@ -390,7 +456,10 @@ export default function CanvasArea() {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 handleMemoContentChange(editingMemo.id, e.target.value)
               }
-              onBlur={() => setEditingMemoId(null)}
+              onBlur={() => {
+                setEditingMemoId(null);
+                setSelectedElement({ id: editingMemo.id, type: 'memo' });
+              }}
             />
           )}
 
@@ -414,7 +483,10 @@ export default function CanvasArea() {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 handleTextContentChange(editingText.id, e.target.value)
               }
-              onBlur={() => setEditingTextId(null)}
+              onBlur={() => {
+                setEditingTextId(null);
+                setSelectedElement({ id: editingText!.id, type: 'text' });
+              }}
             />
           )}
 
@@ -469,6 +541,12 @@ export default function CanvasArea() {
                   onClick={handleMemoClick}
                   onDelete={handleMemoDelete}
                   onArrowConnect={handleElementClick}
+                  isSelected={
+                    selectedElement !== null &&
+                    selectedElement.id === memo.id &&
+                    selectedElement.type === 'memo'
+                  }
+                  onEditStart={() => setEditingMemoId(memo.id)}
                 />
               ))}
               {texts.map((text) => (
@@ -485,6 +563,12 @@ export default function CanvasArea() {
                   onDelete={handleTextDelete}
                   onArrowConnect={handleElementClick}
                   fontSize={20}
+                  isSelected={
+                    selectedElement !== null &&
+                    selectedElement.id === text.id &&
+                    selectedElement.type === 'text'
+                  }
+                  onEditStart={() => setEditingTextId(text.id)}
                 />
               ))}
               {penLines.map((line) => (
@@ -497,6 +581,12 @@ export default function CanvasArea() {
                   activeTool={activeTool}
                   onDelete={handlePenDelete}
                   onArrowConnect={handleElementClick}
+                  onClick={handlePenClick}
+                  isSelected={
+                    selectedElement !== null &&
+                    selectedElement.id === line.id &&
+                    selectedElement.type === 'pen'
+                  }
                 />
               ))}
               {currentLine && (
@@ -508,6 +598,26 @@ export default function CanvasArea() {
                   lineJoin="round"
                 />
               )}
+              {assets.map((asset) => {
+                return (
+                  <AssetImage
+                    id={asset.id}
+                    key={asset.id}
+                    x={asset.x}
+                    y={asset.y}
+                    activeTool={activeTool}
+                    imageUrl={asset.imageUrl}
+                    onDragEnd={handleAssetDragEnd}
+                    onArrowConnect={handleElementClick}
+                    onClick={handleAssetClick}
+                    isSelected={
+                      selectedElement !== null &&
+                      selectedElement.id === asset.id &&
+                      selectedElement.type === 'asset'
+                    }
+                  />
+                );
+              })}
               {arrows.map((arrow) => {
                 const from = getAnchorPosition(arrow.fromId, arrow.fromType);
                 const to = getAnchorPosition(arrow.toId, arrow.toType);

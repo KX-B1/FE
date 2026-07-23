@@ -8,8 +8,11 @@ import ProjectName from '@/components/canvas/ProjectName';
 import ShotCard from '@/components/canvas/ShotCard';
 import TextBox from '@/components/canvas/TextBox';
 import Toolbar from '@/components/canvas/Toolbar';
+import { useCanvasExportStore } from '@/stores/canvasExportStore';
+import { useCanvasNameStore } from '@/stores/canvasStore';
+import Konva from 'konva';
 import { KonvaEventObject } from 'konva/lib/Node';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Layer, Line, Stage } from 'react-konva';
 
 interface Shot {
@@ -67,7 +70,13 @@ export default function CanvasArea() {
   } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<Konva.Stage>(null);
+  const canvasName = useCanvasNameStore((state) => state.canvasName);
+  const setExportFn = useCanvasExportStore((state) => state.setExportFn);
+
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const SLOT_WIDTH = 180;
+  const SLOT_HEIGHT = 120;
 
   const [shots, setShots] = useState<Shot[]>([
     { id: 1, x: 20, y: 20, imageUrl: '/canvas-shotcard.svg' },
@@ -116,6 +125,73 @@ export default function CanvasArea() {
   });
   const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false);
 
+  const handleExportCanvas = useCallback(() => {
+    const shotPoints = shots.flatMap((shot) => [
+      { x: shot.x, y: shot.y },
+      { x: shot.x + SLOT_WIDTH, y: shot.y + SLOT_HEIGHT },
+    ]);
+
+    const memoPoints = memos.flatMap((memo) => [
+      { x: memo.x, y: memo.y },
+      { x: memo.x + 125, y: memo.y + 125 },
+    ]);
+
+    const textPoints = texts.flatMap((text) => [
+      { x: text.x, y: text.y },
+      { x: text.x + 120, y: text.y + 28 },
+    ]);
+
+    const assetPoints = assets.flatMap((asset) => [
+      { x: asset.x, y: asset.y },
+      { x: asset.x + 96, y: asset.y + 96 },
+    ]);
+
+    const penPoints = penLines.flatMap((pen) =>
+      pen.points
+        .map((val, i) =>
+          i % 2 === 0 ? { x: val, y: pen.points[i + 1] } : null
+        )
+        .filter((p) => p !== null)
+    );
+
+    const allPoints = [
+      ...shotPoints,
+      ...memoPoints,
+      ...textPoints,
+      ...assetPoints,
+      ...penPoints,
+    ];
+
+    if (allPoints.length < 1) return;
+
+    const minX = Math.min(...allPoints.map((p) => p.x));
+    const maxX = Math.max(...allPoints.map((p) => p.x));
+    const minY = Math.min(...allPoints.map((p) => p.y));
+    const maxY = Math.max(...allPoints.map((p) => p.y));
+
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const dataUrl = stage.toDataURL({
+      x: minX + stagePos.x,
+      y: minY + stagePos.y,
+      width: maxX - minX,
+      height: maxY - minY,
+      pixelRatio: 2,
+    });
+
+    const link = document.createElement('a');
+
+    link.href = dataUrl;
+    link.download = `${canvasName || 'canvas'}.png`;
+    link.click();
+  }, [shots, memos, texts, assets, penLines, stagePos, canvasName]);
+
+  useEffect(() => {
+    setExportFn(handleExportCanvas);
+    return () => setExportFn(null);
+  }, [handleExportCanvas, setExportFn]);
+
   const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     const droppedAsset = JSON.parse(e.dataTransfer.getData('application/json'));
@@ -123,8 +199,7 @@ export default function CanvasArea() {
       x: e.clientX - containerRef.current.getBoundingClientRect().left,
       y: e.clientY - containerRef.current.getBoundingClientRect().top,
     };
-    const SLOT_WIDTH = 180;
-    const SLOT_HEIGHT = 120;
+
     const matchedShot = shots.find((shot) => {
       return (
         shot.x <= dropPosition.x &&
@@ -503,6 +578,7 @@ export default function CanvasArea() {
           )}
 
           <Stage
+            ref={stageRef}
             width={size.width}
             height={size.height}
             onClick={handleStageClick}

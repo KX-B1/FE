@@ -440,6 +440,12 @@ export default function CanvasArea() {
             e.preventDefault();
           }}
           onDrop={handleCanvasDrop}
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)',
+            backgroundPosition: `${stagePos.x}px ${stagePos.y}px`,
+            backgroundSize: '16px 16px',
+          }}
         >
           {editingMemo && (
             <textarea

@@ -48,7 +48,7 @@ interface Asset {
   imageUrl: string;
 }
 
-export type ElementType = 'shot' | 'memo' | 'text' | 'pen' | 'asset';
+export type ElementType = 'shot' | 'memo' | 'text' | 'pen' | 'asset' | 'arrow';
 
 interface Arrow {
   id: number;
@@ -354,6 +354,10 @@ export default function CanvasArea() {
     }
   };
 
+  const handleArrowClick = (id: number) => {
+    setSelectedElement({ id, type: 'arrow' });
+  };
+
   const handleArrowDelete = (id: number) => {
     setArrows((prevArrows) => prevArrows.filter((arrow) => arrow.id !== id));
   };
@@ -399,6 +403,8 @@ export default function CanvasArea() {
         handlePenDelete(selectedElement.id);
       else if (selectedElement.type === 'asset')
         handleAssetDelete(selectedElement.id);
+      else if (selectedElement.type === 'arrow')
+        handleArrowDelete(selectedElement.id);
 
       setSelectedElement(null);
     };
@@ -632,6 +638,12 @@ export default function CanvasArea() {
                     toX={to.x}
                     toY={to.y}
                     onDelete={handleArrowDelete}
+                    onClick={handleArrowClick}
+                    isSelected={
+                      selectedElement !== null &&
+                      selectedElement.id === arrow.id &&
+                      selectedElement.type === 'arrow'
+                    }
                   />
                 );
               })}

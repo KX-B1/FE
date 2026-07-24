@@ -6,10 +6,26 @@ import { useViewModeStore } from '@/stores/viewModeStore';
 import LogoPanel from './LogoPanel';
 import ExportDropdown from '@/components/common/ExportDropdown';
 import type { HeaderProps } from '@/types/common';
+import { getMe } from '@/lib/api/auth';
 
 export default function Header(props: HeaderProps) {
   const isProject = props.variant === 'project';
   const viewMode = useViewModeStore((state) => state.viewMode);
+  const passedUserId = !isProject ? props.userId : undefined;
+  const [accountId, setAccountId] = useState(passedUserId);
+
+  useEffect(() => {
+    if (isProject || passedUserId) return;
+    let cancelled = false;
+    getMe()
+      .then(({ user }) => {
+        if (!cancelled) setAccountId(user.email);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isProject, passedUserId]);
 
   return (
     <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-1.5">
@@ -19,12 +35,12 @@ export default function Header(props: HeaderProps) {
           onLogoClick={!isProject ? props.onLogoClick : undefined}
           showPanelToggle={isProject}
         />
-        {isProject && <ModeSwitcherTabs />}
+        {isProject && <ViewModeTabs />}
       </div>
       <div className="flex items-center gap-5 px-2.5">
         {!isProject && (
           <span className="text-text-primary text-sm">
-            {props.userId ?? 'ID'}
+            {accountId ?? 'ID'}
           </span>
         )}
 
@@ -52,7 +68,7 @@ export default function Header(props: HeaderProps) {
   );
 }
 
-function ModeSwitcherTabs() {
+function ViewModeTabs() {
   const viewMode = useViewModeStore((state) => state.viewMode);
   const setViewMode = useViewModeStore((state) => state.setViewMode);
 

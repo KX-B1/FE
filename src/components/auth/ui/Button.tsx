@@ -1,4 +1,4 @@
-import { ButtonProps } from '@/types/common';
+import { ButtonProps } from '@/types/auth';
 
 export default function Button({
   children,
@@ -10,10 +10,10 @@ export default function Button({
     <button
       type={type}
       onClick={onClick}
-      className={`w-90 h-13 flex items-center justify-center rounded-[20px] text-base transition ${
+      className={`w-full max-w-90 h-13 flex items-center justify-center rounded-[20px] text-base transition ${
         inactive
           ? 'bg-surface border border-border text-text-primary'
-          : 'bg-linear-to-br from-primary-500 to-primary-700 text-text-primary hover:opacity-80'
+          : 'bg-linear-to-br from-primary-300 to-primary-500 to-80% text-text-primary hover:opacity-80 cursor-pointer'
       }`}
     >
       {children}

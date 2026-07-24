@@ -1,28 +1,41 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import Checkbox from '@/components/auth/Checkbox';
-import GoogleButton from '@/components/auth/GoogleButton';
-import EmailField from '@/components/auth/EmailField';
+import Input from '@/components/auth/ui/Input';
+import Button from '@/components/auth/ui/Button';
+import Checkbox from '@/components/auth/ui/Checkbox';
+import GoogleButton from '@/components/auth/ui/GoogleButton';
+import EmailField from '@/components/auth/forms/EmailField';
 import { useEmailVerification } from '@/hooks/useEmailVerification';
-import { EMAIL_REGEX, PASSWORD_REGEX } from '@/types/auth';
+import { useEmailField } from '@/hooks/useEmailField';
+import { usePasswordField } from '@/hooks/usePasswordField';
+import { EMAIL_REGEX } from '@/types/auth';
+import { signup } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/client';
 
 export default function SignupForm() {
+  const router = useRouter();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const { email, setEmail } = useEmailField();
+  const {
+    password,
+    setPassword,
+    passwordConfirm,
+    setPasswordConfirm,
+    passwordConfirmError,
+    handlePasswordConfirmBlur,
+    isValid: isPasswordSectionValid,
+  } = usePasswordField();
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [passwordTouched, setPasswordTouched] = useState(false);
-  const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const {
     status: verificationStatus,
-    timeLeft,
+    resendCooldown,
     code,
     error: verificationError,
     isVerified: isEmailVerified,
@@ -34,33 +47,34 @@ export default function SignupForm() {
   const isEmailValid = EMAIL_REGEX.test(email);
   const canRequestCode =
     isEmailValid &&
+    resendCooldown === 0 &&
     verificationStatus !== 'sending' &&
     verificationStatus !== 'verified';
-
-  const isPasswordValid = PASSWORD_REGEX.test(password);
-  const passwordError =
-    passwordTouched && password.length > 0 && !isPasswordValid
-      ? '영문, 숫자, 특수문자를 포함한 8자 이상이어야 합니다.'
-      : undefined;
-
-  const passwordConfirmError =
-    passwordConfirmTouched &&
-    passwordConfirm.length > 0 &&
-    password !== passwordConfirm
-      ? '비밀번호가 일치하지 않습니다.'
-      : undefined;
 
   const canSubmit =
     name.length > 0 &&
     isEmailVerified &&
-    isPasswordValid &&
-    password === passwordConfirm &&
+    isPasswordSectionValid &&
     agreeTerms &&
     agreePrivacy;
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    // TODO: await api.signup({ name, email, password })
+  const handleSubmit = async () => {
+    if (!canSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError('');
+    try {
+      // verify-email에서 받은 세션 쿠키로 가입을 완료한다.
+      await signup({ name, email, password });
+      router.push('/login');
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError
+          ? err.message
+          : '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,12 +87,14 @@ export default function SignupForm() {
         <div className="h-px flex-1 bg-border" />
       </div>
 
-      <div className="flex w-95 flex-col gap-7">
+      <div className="flex w-full max-w-95 flex-col gap-7">
         <Input
           label="이름"
           placeholder="이름을 입력하세요"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          focusShadow={false}
+          autoComplete="off"
         />
 
         <EmailField
@@ -88,7 +104,7 @@ export default function SignupForm() {
           canRequestCode={canRequestCode}
           isEmailVerified={isEmailVerified}
           status={verificationStatus}
-          timeLeft={timeLeft}
+          resendCooldown={resendCooldown}
           code={code}
           onCodeChange={setCode}
           onVerify={verifyCode}
@@ -101,8 +117,9 @@ export default function SignupForm() {
           placeholder="비밀번호를 입력하세요"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          onBlur={() => setPasswordTouched(true)}
-          error={passwordError}
+          helperText="영문, 숫자, 특수문자를 포함한 8자 이상을 입력해주세요"
+          focusShadow={false}
+          autoComplete="new-password"
         />
 
         <Input
@@ -111,8 +128,10 @@ export default function SignupForm() {
           placeholder="비밀번호를 다시 입력하세요"
           value={passwordConfirm}
           onChange={(e) => setPasswordConfirm(e.target.value)}
-          onBlur={() => setPasswordConfirmTouched(true)}
+          onBlur={handlePasswordConfirmBlur}
           error={passwordConfirmError}
+          focusShadow={false}
+          autoComplete="new-password"
         />
       </div>
 
@@ -137,13 +156,22 @@ export default function SignupForm() {
         />
       </div>
 
-      <Button type="button" onClick={handleSubmit} inactive={!canSubmit}>
-        회원가입
-      </Button>
+      <div className="flex w-full flex-col items-center gap-2">
+        {submitError && (
+          <p className="text-center text-sm text-status-error">{submitError}</p>
+        )}
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          inactive={!canSubmit || isSubmitting}
+        >
+          {isSubmitting ? '회원가입 중...' : '회원가입'}
+        </Button>
+      </div>
 
       <p className="text-sm text-text-placeholder">
         이미 계정이 있나요?
-        <Link href="/login" className="text-primary-500 hover:underline pl-2.5">
+        <Link href="/login" className="text-primary-300 hover:underline pl-2.5">
           로그인
         </Link>
       </p>

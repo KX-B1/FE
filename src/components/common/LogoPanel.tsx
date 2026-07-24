@@ -24,8 +24,12 @@ export default function LogoPanel({
         onClick={onLogoClick}
         className="flex items-center gap-5 cursor-pointer"
       >
-        <Image src={logoSrc ?? '/logo.svg'} alt="로고" width={40} height={40} />
-        <span className="text-[26px] font-bold text-text-primary">LOGO</span>
+        <Image
+          src={logoSrc ?? '/logo-wordmark.svg'}
+          alt="로고"
+          width={200}
+          height={50}
+        />
       </button>
 
       {showPanelToggle && (

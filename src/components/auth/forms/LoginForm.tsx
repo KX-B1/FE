@@ -3,56 +3,35 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import GoogleButton from '@/components/auth/GoogleButton';
-import { EMAIL_REGEX, PASSWORD_REGEX } from '@/types/auth';
-
-// 임시 로그인용 더미 계정 (백엔드 연동 전까지 사용)
-const DUMMY_USER = {
-  email: 'test@example.com',
-  password: 'qwer_1234',
-};
+import Input from '@/components/auth/ui/Input';
+import Button from '@/components/auth/ui/Button';
+import GoogleButton from '@/components/auth/ui/GoogleButton';
+import { useEmailField } from '@/hooks/useEmailField';
+import { login } from '@/lib/api/auth';
+import { ApiError } from '@/lib/api/client';
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const {
+    email,
+    error: emailError,
+    setError: setEmailError,
+    validate: validateEmail,
+    handleChange: handleEmailChange,
+  } = useEmailField();
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormFilled = email.trim() !== '' && password.trim() !== '';
-
-  const validateEmail = (value: string) => {
-    if (!value) {
-      setEmailError('이메일을 입력해주세요');
-      return false;
-    }
-    if (!EMAIL_REGEX.test(value)) {
-      setEmailError('올바른 이메일 형식이 아닙니다');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
 
   const validatePassword = (value: string) => {
     if (!value) {
       setPasswordError('비밀번호를 입력해주세요');
       return false;
     }
-    if (!PASSWORD_REGEX.test(value)) {
-      setPasswordError('영문, 숫자, 특수문자를 포함한 8자 이상이어야 합니다');
-      return false;
-    }
     setPasswordError('');
     return true;
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (emailError) validateEmail(value);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,24 +40,40 @@ export default function LoginForm() {
     if (passwordError) validatePassword(value);
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     if (!isEmailValid || !isPasswordValid) return;
 
-    // TODO: 실제 login() API 연동 시 더미 계정 검증 제거
-    if (email !== DUMMY_USER.email || password !== DUMMY_USER.password) {
-      setPasswordError('이메일 또는 비밀번호가 일치하지 않습니다');
-      return;
+    setIsSubmitting(true);
+    try {
+      await login({ email, password });
+      router.push('/create');
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        setPasswordError(
+          '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요'
+        );
+      } else if (error.code === 'INVALID_CREDENTIALS') {
+        setPasswordError('이메일 또는 비밀번호가 일치하지 않습니다');
+      } else if (error.code === 'EMAIL_NOT_CONFIRMED') {
+        setEmailError(
+          '이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요'
+        );
+      } else {
+        setPasswordError(error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push('/create');
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-95 flex flex-col items-center gap-7.5"
+      className="w-full max-w-95 flex flex-col items-center gap-7.5"
     >
       <GoogleButton mode="login" />
       <div className="flex w-full items-center gap-4">
@@ -111,21 +106,21 @@ export default function LoginForm() {
         />
         <Link
           href="/forgot-password"
-          className="self-end pr-2 text-sm text-primary-500 hover:underline"
+          className="self-end pr-2 text-sm text-primary-300 hover:underline"
         >
           비밀번호 찾기
         </Link>
       </div>
 
       <div className="flex w-full flex-col items-center gap-7.5 p-2.5">
-        <Button type="submit" inactive={!isFormFilled}>
-          로그인
+        <Button type="submit" inactive={!isFormFilled || isSubmitting}>
+          {isSubmitting ? '로그인 중...' : '로그인'}
         </Button>
         <p className="text-center text-sm text-text-placeholder">
           계정이 없으신가요?
           <Link
             href="/signup"
-            className="ml-2.5 text-primary-500 hover:underline"
+            className="ml-2.5 text-primary-300 hover:underline"
           >
             회원가입
           </Link>

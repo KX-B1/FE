@@ -1,10 +1,14 @@
 import SignupCard from '@/components/auth/SignupCard';
-import SignupForm from '@/components/auth/SignupForm';
+import SignupForm from '@/components/auth/forms/SignupForm';
 import SignupVisualPanel from '@/components/auth/SignupVisualPanel';
+import { AUTH_PAGE_BACKGROUND } from '@/components/auth/AuthCard';
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-12 bg-linear-to-br from-[#0C0D18] via-[#110828] to-[#0A0C1A] px-6 py-16 lg:flex-row lg:gap-52 lg:p-30">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-16 min-[1440px]:flex-row min-[1440px]:gap-52 min-[1440px]:p-30"
+      style={{ backgroundImage: AUTH_PAGE_BACKGROUND }}
+    >
       <SignupVisualPanel />
       <SignupCard>
         <SignupForm />

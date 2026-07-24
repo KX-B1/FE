@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 
@@ -12,6 +12,10 @@ const pretendard = localFont({
 export const metadata: Metadata = {
   title: 'KXB1',
   description: '이미지와 시나리오로 스토리보드를 생성하세요',
+};
+
+export const viewport: Viewport = {
+  colorScheme: 'dark',
 };
 
 export default function RootLayout({

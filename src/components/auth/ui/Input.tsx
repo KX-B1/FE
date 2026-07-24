@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Eye } from 'lucide-react';
-import { InputProps } from '@/types/common';
+import { InputProps } from '@/types/auth';
 
 export default function Input({
   label,
@@ -12,36 +12,29 @@ export default function Input({
   onChange,
   onBlur,
   error,
+  helperText,
+  focusShadow = true,
+  autoComplete,
 }: InputProps) {
-  const [readOnly, setReadOnly] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
   return (
     <div className="relative flex flex-col gap-2">
-      <label className="px-5 text-sm text-text-primary">{label}</label>
+      <label className="px-5 text-sm text-text-secondary">{label}</label>
       <div className="relative">
         <input
           type={inputType}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          onBlur={() => {
-            setIsFocused(false);
-            onBlur?.();
-          }}
-          readOnly={readOnly}
-          onMouseDown={() => setReadOnly(false)}
-          onFocus={() => {
-            setReadOnly(false);
-            setIsFocused(true);
-          }}
-          className={`w-full h-13 rounded-[10px] bg-surface border text-sm text-text-primary placeholder:text-text-placeholder outline-none focus:outline-none px-5 ${
-            isFocused
-              ? 'border-primary-500 shadow-[0_0_2px_2px] shadow-primary-500/30'
-              : 'border-border'
+          autoComplete={autoComplete}
+          onBlur={onBlur}
+          className={`w-full h-13 rounded-[10px] bg-background border text-sm text-text-primary placeholder:text-text-placeholder outline-none focus:outline-none px-5 ${focusShadow ? 'autofill-focus-ring' : ''} ${
+            error
+              ? 'border-status-error'
+              : `border-border focus:border-primary-500 ${focusShadow ? 'focus:shadow-[0_0_2px_2px] focus:shadow-primary-500/30' : ''}`
           }`}
         />
         {isPassword && (
@@ -57,7 +50,13 @@ export default function Input({
           </button>
         )}
       </div>
-      {error && <p className="px-5 text-xs text-status-error">{error}</p>}
+      {error ? (
+        <p className="px-5 text-xs text-status-error">{error}</p>
+      ) : (
+        helperText && (
+          <p className="px-5 text-xs text-text-secondary">{helperText}</p>
+        )
+      )}
     </div>
   );
 }

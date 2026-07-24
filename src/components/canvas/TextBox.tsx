@@ -1,4 +1,6 @@
 import { ElementType, ToolType } from '@/components/canvas/CanvasArea';
+import Konva from 'konva';
+import { useEffect, useRef, useState } from 'react';
 import { Group, Rect, Image as KonvaImage, Text } from 'react-konva';
 import useImage from 'use-image';
 
@@ -34,6 +36,22 @@ export default function TextBox({
   isSelected,
 }: TextBoxProps) {
   const [deleteIcon] = useImage('/canvas-delete-button.svg');
+  const textRef = useRef<Konva.Text>(null);
+  const MIN_WIDTH = 120;
+  const [boxWidth, setBoxWidth] = useState(MIN_WIDTH);
+
+  const MAX_CHARS = 20;
+  const MAX_WIDTH = 300; // 20자 캡 도달 시 고정폭 (실측 후 조정)
+  const isOverflow = content.length >= MAX_CHARS;
+
+  useEffect(() => {
+    if (!textRef.current || isOverflow) return;
+    const w = textRef.current.getTextWidth();
+    setBoxWidth(Math.max(40, w + 8)); // padding 4+4
+  }, [content, isOverflow]);
+
+  const displayWidth = isOverflow ? MAX_WIDTH : boxWidth;
+
   return (
     <Group
       x={x}
@@ -50,7 +68,7 @@ export default function TextBox({
       onDblClick={() => onEditStart(id)}
     >
       <Rect
-        width={120}
+        width={displayWidth}
         height={28}
         fill="transparent"
         stroke={isEditing ? '#394257' : isSelected ? '#394257' : undefined}
@@ -58,8 +76,10 @@ export default function TextBox({
       />
       {!isEditing && (
         <Text
+          ref={textRef}
           text={content}
-          width={120}
+          width={isOverflow ? MAX_WIDTH : undefined}
+          wrap={isOverflow ? 'word' : 'none'}
           x={4}
           y={4}
           fontSize={fontSize}
@@ -71,7 +91,7 @@ export default function TextBox({
           image={deleteIcon}
           width={12}
           height={12}
-          x={102}
+          x={displayWidth - 18}
           y={6}
           onClick={(e) => {
             e.cancelBubble = true;

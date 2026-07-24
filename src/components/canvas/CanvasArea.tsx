@@ -293,7 +293,7 @@ export default function CanvasArea() {
       x: pointerPosition.x,
       y: pointerPosition.y,
       content: '',
-      fontSize: 20,
+      fontSize: 12,
     };
     setTexts([...texts, newText]);
     setEditingTextId(newText.id);
@@ -307,7 +307,6 @@ export default function CanvasArea() {
   };
 
   const handleTextContentChange = (id: number, content: string) => {
-    if (content.length > 6) return;
     setTexts((prevTexts) =>
       prevTexts.map((text) => (text.id === id ? { ...text, content } : text))
     );
@@ -559,13 +558,15 @@ export default function CanvasArea() {
               style={{
                 left: editingText.x + stagePos.x,
                 top: editingText.y + stagePos.y,
-                width: 120,
+                width: 300,
                 height: 28,
                 resize: 'none',
                 zIndex: 10,
                 outline: 'none',
                 border: 'none',
                 padding: 0,
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
               }}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 handleTextContentChange(editingText.id, e.target.value)
@@ -650,7 +651,7 @@ export default function CanvasArea() {
                   onClick={handleTextClick}
                   onDelete={handleTextDelete}
                   onArrowConnect={handleElementClick}
-                  fontSize={20}
+                  fontSize={12}
                   isSelected={
                     selectedElement !== null &&
                     selectedElement.id === text.id &&

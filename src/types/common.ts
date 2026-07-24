@@ -37,4 +37,5 @@ export type HeaderProps =
 
 export interface ExportDropdownProps {
   onExport?: (type: 'pdf' | 'png') => void;
+  viewMode?: 'storyboard' | 'canvas';
 }

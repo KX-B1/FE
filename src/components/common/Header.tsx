@@ -9,6 +9,7 @@ import type { HeaderProps } from '@/types/common';
 
 export default function Header(props: HeaderProps) {
   const isProject = props.variant === 'project';
+  const viewMode = useViewModeStore((state) => state.viewMode);
 
   return (
     <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-1.5">
@@ -36,7 +37,7 @@ export default function Header(props: HeaderProps) {
             >
               저장하기
             </button>
-            <ExportDropdown onExport={props.onExport} />
+            <ExportDropdown onExport={props.onExport} viewMode={viewMode} />
           </>
         )}
 

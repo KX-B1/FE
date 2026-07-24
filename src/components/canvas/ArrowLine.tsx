@@ -8,6 +8,8 @@ interface ArrowLineProps {
   toX: number;
   toY: number;
   onDelete: (id: number) => void;
+  onClick: (id: number) => void;
+  isSelected: boolean;
 }
 
 export default function ArrowLine({
@@ -17,17 +19,20 @@ export default function ArrowLine({
   toX,
   toY,
   onDelete,
+  onClick,
+  isSelected,
 }: ArrowLineProps) {
   const [deleteIcon] = useImage('/canvas-delete-button.svg');
   return (
     <>
       <Arrow
         points={[fromX, fromY, toX, toY]}
-        fill="#ffffff"
-        stroke="#ffffff"
+        fill={isSelected ? '#394257' : '#ffffff'}
+        stroke={isSelected ? '#394257' : '#ffffff'}
         strokeWidth={2}
         pointerLength={10}
         pointerWidth={10}
+        onClick={() => onClick(id)}
       />
       {deleteIcon && (
         <KonvaImage

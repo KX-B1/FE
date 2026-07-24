@@ -5,9 +5,13 @@ import { ChevronDown } from 'lucide-react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import type { ExportDropdownProps } from '@/types/common';
 
-export default function ExportDropdown({ onExport }: ExportDropdownProps) {
+export default function ExportDropdown({
+  onExport,
+  viewMode,
+}: ExportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isPdfDisabled = viewMode === 'canvas';
 
   useClickOutside(dropdownRef, () => setIsOpen(false));
 
@@ -42,8 +46,9 @@ export default function ExportDropdown({ onExport }: ExportDropdownProps) {
 
             <button
               type="button"
-              onClick={() => handleExport('pdf')}
-              className={exportButtonClass}
+              onClick={() => !isPdfDisabled && handleExport('pdf')}
+              disabled={isPdfDisabled}
+              className={`${exportButtonClass} ${isPdfDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
             >
               PDF로 내보내기
             </button>
